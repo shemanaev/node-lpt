@@ -2,8 +2,8 @@
 
 High level binding to deal with parallel ports.
 
-**Important**: It works only under linux and uses parport driver,
-so you might need to compile kernel with required drivers (for gentoo mostly).
+**Important**: this module works only under linux through the `parport` driver,
+so you might need to compile kernel or modules (on gentoo mostly).
 
 ## Installation
 
@@ -37,7 +37,7 @@ port.control = 123 // write control register
 | status.select   | bool | /SELECT pin (17)               | R          |
 | status.paperOut | bool | PAPEROUT pin (12)              | R          |
 
-*Note that /BUSY pin is inverted by `node-lpt` itself
+* *Note that /BUSY pin is inverted by `node-lpt` itself*
 
 ## License
 
