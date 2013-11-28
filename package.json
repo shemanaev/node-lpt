@@ -1,0 +1,16 @@
+{ "name": "lpt"
+, "version": "0.1"
+, "description": "High level binding to deal with parallel ports"
+, "author": "Denis Shemanaev <denis@shemanaev.com>"
+, "license": "MIT"
+, "keywords": [ "parallel port", "lpt", "printer" ]
+, "homepage": "https://github.com/DeniSix/node-lpt"
+, "repository":
+  { "type": "git"
+  , "url": "git://github.com/DeniSix/node-lpt.git"
+  }
+, "engines":
+  { "node": ">= 0.8.0"
+  }
+, "main": "./build/Release/lpt"
+}
