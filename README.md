@@ -1,6 +1,6 @@
 # node-lpt
 
-High level binding to deal with parallel ports.
+High-level bindings to parallel port for node.js.
 
 **Important**: this module works only under linux through the `parport` driver,
 so you might need to compile kernel or modules (on gentoo mostly).
@@ -27,17 +27,17 @@ port.control = 123 // write control register
 
 `Port` class provides next fields:
 
-| Field           | Type | Description                    | Read/Write |
-| --------------- | ---- | ------------------------------ |:----------:|
-| data            | byte | Data register                  | R/W        |
-| control         | byte | Control register               | R/W        |
-| status.ack      | bool | ACK pin (10)                   | R          |
-| status.busy     | bool | /BUSY pin (11) *               | R          |
-| status.error    | bool | ERROR pin (15)                 | R          |
-| status.select   | bool | /SELECT pin (17)               | R          |
-| status.paperOut | bool | PAPEROUT pin (12)              | R          |
+| Field           | Type | Description       | Read/Write | Pin num       |
+| --------------- | ---- | ----------------- |:----------:| -------------:|
+| data            | byte | Data register     | R/W        | 2..9          |
+| control         | byte | Control register  | R/W        | 1, 14, 16, 17 |
+| status.ack      | bool | ACK               | R          | 10            |
+| status.busy     | bool | /BUSY *           | R          | 11            |
+| status.error    | bool | ERROR             | R          | 15            |
+| status.select   | bool | SELECT            | R          | 13            |
+| status.paperOut | bool | PAPEROUT          | R          | 12            |
 
-* *Note that /BUSY pin is inverted by `node-lpt` itself*
+*_Note that /BUSY pin is inverted by `node-lpt` itself_
 
 ## License
 
