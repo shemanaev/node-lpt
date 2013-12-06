@@ -13,17 +13,25 @@ Persistent<Function> PortControl::constructor;
 PortControl::PortControl(int handle) : handle_(handle) {}
 PortControl::~PortControl() {}
 
+void invert(int *value) {
+  *value ^= PARPORT_CONTROL_SELECT;
+  *value ^= PARPORT_CONTROL_AUTOFD;
+  *value ^= PARPORT_CONTROL_STROBE;
+}
+
 int PortControl::GetControl() {
   int value;
 
   if (ioctl(handle_, PPRCONTROL, &value) != 0) {
     THROW_EXCEPTION("Can't read control register");
   }
+  invert(&value);
 
   return value;
 }
 
 void PortControl::SetControl(int value) {
+  invert(&value);
   if (ioctl(handle_, PPWCONTROL, &value) != 0) {
     THROW_EXCEPTION("Can't write control register");
   }
