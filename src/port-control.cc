@@ -16,8 +16,8 @@ PortControl::~PortControl() {}
 int PortControl::GetControl() {
   int value;
 
-  if (ioctl(obj->handle_, PPRCONTROL, &value) != 0) {
-    return THROW_EXCEPTION("Can't read control register");
+  if (ioctl(handle_, PPRCONTROL, &value) != 0) {
+    THROW_EXCEPTION("Can't read control register");
   }
 
   return value;
