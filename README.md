@@ -16,11 +16,10 @@ var lpt = require('lpt')
   , port = new lpt.Port(0) // open /dev/parport0
 
 console.log(port.data) // read data register
-console.log(port.control) // read control register
-console.log(port.status.busy) // get port status
+console.log(port.status.busy) // get /BUSY pin status
 
 port.data = 123 // write data register
-port.control = 123 // write control register
+port.control.init = true // write to control register
 ```
 
 ## API
