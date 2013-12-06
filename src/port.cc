@@ -6,6 +6,7 @@
 
 #include "port.h"
 #include "port-status.h"
+#include "port-control.h"
 #include "node-helpers.h"
 
 using namespace v8;
@@ -93,6 +94,9 @@ Handle<Value> Port::GetControl(Local<String> property, const AccessorInfo& info)
   }
 
   return scope.Close(Integer::New(ret));
+  HandleScope scope;
+  Port* obj = ObjectWrap::Unwrap<Port>(info.Holder());
+  return scope.Close(PortControl::NewInstance(obj->handle_));
 }
 
 void Port::SetControl(Local<String> property, Local<Value> value, const AccessorInfo& info) {
@@ -102,6 +106,7 @@ void Port::SetControl(Local<String> property, Local<Value> value, const Accessor
   if (ioctl(obj->handle_, PPWCONTROL, &val) != 0) {
     THROW_EXCEPTION("Can't write control register");
   }
+  THROW_EXCEPTION("You can't modify control itself");
 }
 
 Handle<Value> Port::GetStatus(Local<String> property, const AccessorInfo& info) {
