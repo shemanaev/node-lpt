@@ -43,6 +43,8 @@ port.control = 123 // write control register
 
 *_Note that this pins are inverted by `node-lpt` itself_
 
+**_You can read control pins only after you wrote something to it. Before that moment you can't rely on pin status_
+
 ## License
 
 MIT
