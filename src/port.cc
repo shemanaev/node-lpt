@@ -87,25 +87,10 @@ void Port::SetData(Local<String> property, Local<Value> value, const AccessorInf
 Handle<Value> Port::GetControl(Local<String> property, const AccessorInfo& info) {
   HandleScope scope;
   Port* obj = ObjectWrap::Unwrap<Port>(info.Holder());
-
-  unsigned char ret;
-  if (ioctl(obj->handle_, PPRCONTROL, &ret) != 0) {
-    return THROW_EXCEPTION("Can't read control register");
-  }
-
-  return scope.Close(Integer::New(ret));
-  HandleScope scope;
-  Port* obj = ObjectWrap::Unwrap<Port>(info.Holder());
   return scope.Close(PortControl::NewInstance(obj->handle_));
 }
 
 void Port::SetControl(Local<String> property, Local<Value> value, const AccessorInfo& info) {
-  int val = value->IntegerValue();
-  Port* obj = ObjectWrap::Unwrap<Port>(info.Holder());
-
-  if (ioctl(obj->handle_, PPWCONTROL, &val) != 0) {
-    THROW_EXCEPTION("Can't write control register");
-  }
   THROW_EXCEPTION("You can't modify control itself");
 }
 
