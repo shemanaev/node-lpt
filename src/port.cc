@@ -1,5 +1,6 @@
 #include <node.h>
 #include <sstream>
+#include <unistd.h>
 #include <sys/ioctl.h>
 #include <linux/parport.h>
 #include <linux/ppdev.h>
