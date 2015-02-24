@@ -28,6 +28,7 @@ int GetModeByName(std::string mode) {
 void Port::SetDataDir(bool out) {
   int value;
 
+  isOut_ = out;
   if (ioctl(handle_, PPRCONTROL, &value) != 0) {
     THROW_EXCEPTION("Can't read control register");
   }
