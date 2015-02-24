@@ -27,7 +27,7 @@ int GetModeByName(std::string mode) {
 
 Persistent<Function> Port::constructor;
 
-Port::Port(int num, int mode) {
+Port::Port(int num, int mode, bool set) {
   std::stringstream device;
   device << "/dev/parport" << num;
 
@@ -39,7 +39,7 @@ Port::Port(int num, int mode) {
     close(handle_);
     THROW_EXCEPTION("Can't claim device");
   }
-  if (ioctl(handle_, PPNEGOT, &mode) != 0) {
+  if (ioctl(handle_, set ? PPSETMODE : PPNEGOT, &mode) != 0) {
     close(handle_);
     THROW_EXCEPTION("Can't negotiate required mode");
   }
@@ -72,7 +72,8 @@ Handle<Value> Port::New(const Arguments& args) {
 
   int num = args[0]->IsUndefined() ? 0 : args[0]->IntegerValue();
   std::string mode = args[1]->IsUndefined() ? "byte" : *String::Utf8Value(args[1]);
-  Port* obj = new Port(num, GetModeByName(mode));
+  bool set = args[2]->IsUndefined() ? false : args[2]->BooleanValue();
+  Port* obj = new Port(num, GetModeByName(mode), set);
   obj->Wrap(args.This());
   return args.This();
 }
