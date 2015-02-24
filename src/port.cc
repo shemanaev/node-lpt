@@ -12,9 +12,22 @@
 
 using namespace v8;
 
+int GetModeByName(std::string mode) {
+  if (mode == "nibble") {
+    return IEEE1284_MODE_NIBBLE;
+  } else if (mode == "ecp") {
+    return IEEE1284_MODE_ECP;
+  } else if (mode == "epp") {
+    return IEEE1284_MODE_EPP;
+  } else if (mode == "SPP") {
+    return IEEE1284_MODE_COMPAT;
+  }
+  return IEEE1284_MODE_BYTE;
+}
+
 Persistent<Function> Port::constructor;
 
-Port::Port(int num) {
+Port::Port(int num, int mode) {
   std::stringstream device;
   device << "/dev/parport" << num;
 
@@ -26,7 +39,6 @@ Port::Port(int num) {
     close(handle_);
     THROW_EXCEPTION("Can't claim device");
   }
-  int mode = IEEE1284_MODE_COMPAT;
   if (ioctl(handle_, PPNEGOT, &mode) != 0) {
     close(handle_);
     THROW_EXCEPTION("Can't negotiate required mode");
@@ -59,7 +71,8 @@ Handle<Value> Port::New(const Arguments& args) {
   }
 
   int num = args[0]->IsUndefined() ? 0 : args[0]->IntegerValue();
-  Port* obj = new Port(num);
+  std::string mode = args[1]->IsUndefined() ? "byte" : *String::Utf8Value(args[1]);
+  Port* obj = new Port(num, GetModeByName(mode));
   obj->Wrap(args.This());
   return args.This();
 }
@@ -68,6 +81,11 @@ Handle<Value> Port::GetData(Local<String> property, const AccessorInfo& info) {
   HandleScope scope;
   unsigned char data;
   Port* obj = ObjectWrap::Unwrap<Port>(info.Holder());
+
+  if (obj->dir_ != 0) {
+    obj->dir_ = 0;
+    ioctl(obj->handle_, PPDATADIR, &obj->dir_);
+  }
 
   if (ioctl(obj->handle_, PPRDATA, &data) != 0) {
     return THROW_EXCEPTION("Can't read data register");
@@ -79,6 +97,11 @@ Handle<Value> Port::GetData(Local<String> property, const AccessorInfo& info) {
 void Port::SetData(Local<String> property, Local<Value> value, const AccessorInfo& info) {
   int val = value->IntegerValue();
   Port* obj = ObjectWrap::Unwrap<Port>(info.Holder());
+
+  if (obj->dir_ == 0) {
+    obj->dir_ = 1;
+    ioctl(obj->handle_, PPDATADIR, &obj->dir_);
+  }
 
   if (ioctl(obj->handle_, PPWDATA, &val) != 0) {
     THROW_EXCEPTION("Can't write data register");

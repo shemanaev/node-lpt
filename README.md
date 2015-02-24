@@ -13,7 +13,7 @@ so you might need to compile kernel or modules (on gentoo mostly).
 
 ```javascript
 var lpt = require('lpt')
-  , port = new lpt.Port(0) // open /dev/parport0
+  , port = new lpt.Port(0, 'byte') // open /dev/parport0
 
 console.log(port.data) // read data register
 console.log(port.status.busy) // get /BUSY pin status
@@ -23,6 +23,15 @@ port.control.init = true // write to control register
 ```
 
 ## API
+
+Constructor receives the following parameters:
+  * `port number`
+  * `parallel port mode` - optional. Can be:
+    * `spp`
+    * `nibble`
+    * `byte` - default
+    * `epp`
+    * `ecp`
 
 `Port` class provides next fields:
 

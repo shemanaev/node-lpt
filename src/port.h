@@ -8,7 +8,7 @@ class Port : public node::ObjectWrap {
   static void Init(v8::Handle<v8::Object> exports);
 
  private:
-  explicit Port(int num = 0);
+  explicit Port(int num, int mode);
   ~Port();
 
   static v8::Handle<v8::Value> New(const v8::Arguments& args);
@@ -25,6 +25,7 @@ class Port : public node::ObjectWrap {
   static v8::Persistent<v8::Function> constructor;
 
   int handle_;
+  int dir_;
 };
 
 #endif
