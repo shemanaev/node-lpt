@@ -25,7 +25,6 @@ class Port : public node::ObjectWrap {
   static v8::Persistent<v8::Function> constructor;
 
   int handle_;
-  int dir_;
 };
 
 #endif

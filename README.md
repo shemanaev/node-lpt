@@ -32,6 +32,7 @@ Constructor receives the following parameters:
     * `byte` - default
     * `epp`
     * `ecp`
+  * `negotiate port` - optional. If `true` will try IEEE 1284 compliant mode negotiation.
 
 `Port` class provides next fields:
 
