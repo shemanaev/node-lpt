@@ -24,10 +24,8 @@ class Port : public node::ObjectWrap {
 
   static v8::Persistent<v8::Function> constructor;
 
-  void SetDataDir(bool out);
-
   int handle_;
-  bool isOut_;
+  int dir_;
 };
 
 #endif

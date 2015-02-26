@@ -25,24 +25,6 @@ int GetModeByName(std::string mode) {
   return IEEE1284_MODE_BYTE;
 }
 
-void Port::SetDataDir(bool out) {
-  int value;
-
-  if (ioctl(handle_, PPRCONTROL, &value) != 0) {
-    THROW_EXCEPTION("Can't read control register");
-  }
-
-  if (out) {
-    value &= ~(1 << 5);
-  } else {
-    value |= 1 << 5;
-  }
-
-  if (ioctl(handle_, PPWCONTROL, &value) != 0) {
-    THROW_EXCEPTION("Can't write control register");
-  }
-}
-
 Persistent<Function> Port::constructor;
 
 Port::Port(int num, int mode, bool set) {
@@ -61,7 +43,6 @@ Port::Port(int num, int mode, bool set) {
     close(handle_);
     THROW_EXCEPTION("Can't negotiate required mode");
   }
-  SetDataDir(false);
 }
 
 Port::~Port() {
@@ -102,8 +83,9 @@ Handle<Value> Port::GetData(Local<String> property, const AccessorInfo& info) {
   unsigned char data;
   Port* obj = ObjectWrap::Unwrap<Port>(info.Holder());
 
-  if (obj->isOut_) {
-    obj->SetDataDir(false);
+  if (obj->dir_ != 0) {
+    obj->dir_ = 0;
+    ioctl(obj->handle_, PPDATADIR, &obj->dir_);
   }
 
   if (ioctl(obj->handle_, PPRDATA, &data) != 0) {
@@ -117,8 +99,9 @@ void Port::SetData(Local<String> property, Local<Value> value, const AccessorInf
   int val = value->IntegerValue();
   Port* obj = ObjectWrap::Unwrap<Port>(info.Holder());
 
-  if (!obj->isOut_) {
-    obj->SetDataDir(true);
+  if (obj->dir_ == 0) {
+    obj->dir_ = 1;
+    ioctl(obj->handle_, PPDATADIR, &obj->dir_);
   }
 
   if (ioctl(obj->handle_, PPWDATA, &val) != 0) {
