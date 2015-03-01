@@ -13,7 +13,8 @@ so you might need to compile kernel or modules (on gentoo mostly).
 
 ```javascript
 var lpt = require('lpt')
-  , port = new lpt.Port(0, 'byte') // open /dev/parport0
+  , port = new lpt.Port(0, 'byte', false) // open /dev/parport0 with forced `byte` mode set
+  // , port = new lpt.Port(0) // the same
 
 console.log(port.data) // read data register
 console.log(port.status.busy) // get /BUSY pin status
