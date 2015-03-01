@@ -1,5 +1,5 @@
 { "name": "lpt"
-, "version": "0.2.2"
+, "version": "0.2.3"
 , "description": "High level binding to deal with parallel ports (linux only)"
 , "author": "Denis Shemanaev <denis@shemanaev.com>"
 , "license": "MIT"
