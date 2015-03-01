@@ -13,7 +13,8 @@ so you might need to compile kernel or modules (on gentoo mostly).
 
 ```javascript
 var lpt = require('lpt')
-  , port = new lpt.Port(0) // open /dev/parport0
+  , port = new lpt.Port(0, 'byte', false) // open /dev/parport0 with forced `byte` mode set
+  // , port = new lpt.Port(0) // the same
 
 console.log(port.data) // read data register
 console.log(port.status.busy) // get /BUSY pin status
@@ -23,6 +24,16 @@ port.control.init = true // write to control register
 ```
 
 ## API
+
+Constructor receives the following parameters:
+  * `port number`
+  * `parallel port mode` - optional. Can be:
+    * `spp`
+    * `nibble`
+    * `byte` - default
+    * `epp`
+    * `ecp`
+  * `negotiate port` - optional. If `true` will try IEEE 1284 compliant mode negotiation.
 
 `Port` class provides next fields:
 

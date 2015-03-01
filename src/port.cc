@@ -12,9 +12,22 @@
 
 using namespace v8;
 
+int GetModeByName(std::string mode) {
+  if (mode == "nibble") {
+    return IEEE1284_MODE_NIBBLE;
+  } else if (mode == "ecp") {
+    return IEEE1284_MODE_ECP;
+  } else if (mode == "epp") {
+    return IEEE1284_MODE_EPP;
+  } else if (mode == "SPP") {
+    return IEEE1284_MODE_COMPAT;
+  }
+  return IEEE1284_MODE_BYTE;
+}
+
 Persistent<Function> Port::constructor;
 
-Port::Port(int num) {
+Port::Port(int num, int mode, bool negotiate) {
   std::stringstream device;
   device << "/dev/parport" << num;
 
@@ -26,8 +39,7 @@ Port::Port(int num) {
     close(handle_);
     THROW_EXCEPTION("Can't claim device");
   }
-  int mode = IEEE1284_MODE_COMPAT;
-  if (ioctl(handle_, PPNEGOT, &mode) != 0) {
+  if (ioctl(handle_, negotiate ? PPNEGOT : PPSETMODE, &mode) != 0) {
     close(handle_);
     THROW_EXCEPTION("Can't negotiate required mode");
   }
@@ -59,7 +71,9 @@ Handle<Value> Port::New(const Arguments& args) {
   }
 
   int num = args[0]->IsUndefined() ? 0 : args[0]->IntegerValue();
-  Port* obj = new Port(num);
+  std::string mode = args[1]->IsUndefined() ? "byte" : *String::Utf8Value(args[1]);
+  bool negotiate = args[2]->IsUndefined() ? false : args[2]->BooleanValue();
+  Port* obj = new Port(num, GetModeByName(mode), negotiate);
   obj->Wrap(args.This());
   return args.This();
 }
@@ -67,7 +81,11 @@ Handle<Value> Port::New(const Arguments& args) {
 Handle<Value> Port::GetData(Local<String> property, const AccessorInfo& info) {
   HandleScope scope;
   unsigned char data;
+  int dir;
   Port* obj = ObjectWrap::Unwrap<Port>(info.Holder());
+
+  dir = 1;
+  ioctl(obj->handle_, PPDATADIR, &dir);
 
   if (ioctl(obj->handle_, PPRDATA, &data) != 0) {
     return THROW_EXCEPTION("Can't read data register");
@@ -78,7 +96,11 @@ Handle<Value> Port::GetData(Local<String> property, const AccessorInfo& info) {
 
 void Port::SetData(Local<String> property, Local<Value> value, const AccessorInfo& info) {
   int val = value->IntegerValue();
+  int dir;
   Port* obj = ObjectWrap::Unwrap<Port>(info.Holder());
+
+  dir = 0;
+  ioctl(obj->handle_, PPDATADIR, &dir);
 
   if (ioctl(obj->handle_, PPWDATA, &val) != 0) {
     THROW_EXCEPTION("Can't write data register");
