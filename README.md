@@ -55,6 +55,13 @@ Constructor receives the following parameters:
 
 **_You can read control pins only after you wrote something to it. Before that moment you can't rely on pin status_
 
+## Useful links
+
+* [Standard Parallel Port](http://users.utcluj.ro/~baruch/media/siee/labor/Standard-Parallel-Port.pdf)
+* [Using in Linux](http://www.labbookpages.co.uk/electronics/parallelPort.html)
+* [Parallel port interfacing made easy](http://www.epanorama.net/circuits/parallel_output.html)
+* [ECP Description](http://retired.beyondlogic.org/ecp/ecp.htm)
+
 ## License
 
 MIT
