@@ -1,6 +1,7 @@
 
 #define THROW_EXCEPTION(msg) \
-  ThrowException(Exception::TypeError(String::New(msg)))
+  isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, msg)))
+
 
 #define NODE_SET_ACCESSOR(obj, name, get, set) \
-  (obj)->InstanceTemplate()->SetAccessor(String::NewSymbol(name), get, set)
+  (obj)->InstanceTemplate()->SetAccessor(String::NewFromUtf8(isolate, name), get, set)

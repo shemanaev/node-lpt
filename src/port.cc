@@ -1,5 +1,6 @@
 #include <node.h>
 #include <sstream>
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <linux/parport.h>
@@ -10,7 +11,9 @@
 #include "port-control.h"
 #include "node-helpers.h"
 
-using namespace v8;
+using v8::Exception;
+using v8::FunctionTemplate;
+using v8::Integer;
 
 int GetModeByName(std::string mode) {
   if (mode == "nibble") {
@@ -19,7 +22,7 @@ int GetModeByName(std::string mode) {
     return IEEE1284_MODE_ECP;
   } else if (mode == "epp") {
     return IEEE1284_MODE_EPP;
-  } else if (mode == "SPP") {
+  } else if (mode == "spp") {
     return IEEE1284_MODE_COMPAT;
   }
   return IEEE1284_MODE_BYTE;
@@ -27,7 +30,7 @@ int GetModeByName(std::string mode) {
 
 Persistent<Function> Port::constructor;
 
-Port::Port(int num, int mode, bool negotiate) {
+Port::Port(Isolate* isolate, int num, int mode, bool negotiate) {
   std::stringstream device;
   device << "/dev/parport" << num;
 
@@ -50,36 +53,40 @@ Port::~Port() {
   close(handle_);
 }
 
-void Port::Init(Handle<Object> exports) {
-  Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
-  tpl->SetClassName(String::NewSymbol("Port"));
+void Port::Init(Local<Object> exports) {
+  Isolate* isolate = Isolate::GetCurrent();
+
+  Local<FunctionTemplate> tpl = FunctionTemplate::New(isolate, New);
+  tpl->SetClassName(String::NewFromUtf8(isolate, "Port"));
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
   NODE_SET_ACCESSOR(tpl, "data", GetData, SetData);
   NODE_SET_ACCESSOR(tpl, "control", GetControl, SetControl);
   NODE_SET_ACCESSOR(tpl, "status", GetStatus, SetStatus);
 
-  constructor = Persistent<Function>::New(tpl->GetFunction());
-  exports->Set(String::NewSymbol("Port"), constructor);
+  constructor.Reset(isolate, tpl->GetFunction());
+  exports->Set(String::NewFromUtf8(isolate, "Port"), tpl->GetFunction());
 }
 
-Handle<Value> Port::New(const Arguments& args) {
-  HandleScope scope;
+void Port::New(const FunctionCallbackInfo<Value>& args) {
+  Isolate* isolate = args.GetIsolate();
 
   if (!args.IsConstructCall()) {
-    return THROW_EXCEPTION("Use the new operator to create instances of this object.");
+    THROW_EXCEPTION("Use the new operator to create instances of this object.");
+    return;
   }
 
   int num = args[0]->IsUndefined() ? 0 : args[0]->IntegerValue();
   std::string mode = args[1]->IsUndefined() ? "byte" : *String::Utf8Value(args[1]);
   bool negotiate = args[2]->IsUndefined() ? false : args[2]->BooleanValue();
-  Port* obj = new Port(num, GetModeByName(mode), negotiate);
+  Port* obj = new Port(isolate, num, GetModeByName(mode), negotiate);
   obj->Wrap(args.This());
-  return args.This();
+  args.GetReturnValue().Set(args.This());
 }
 
-Handle<Value> Port::GetData(Local<String> property, const AccessorInfo& info) {
-  HandleScope scope;
+void Port::GetData(Local<String> property, const PropertyCallbackInfo<Value>& info) {
+  Isolate* isolate = info.GetIsolate();
+
   unsigned char data;
   int dir;
   Port* obj = ObjectWrap::Unwrap<Port>(info.Holder());
@@ -88,13 +95,16 @@ Handle<Value> Port::GetData(Local<String> property, const AccessorInfo& info) {
   ioctl(obj->handle_, PPDATADIR, &dir);
 
   if (ioctl(obj->handle_, PPRDATA, &data) != 0) {
-    return THROW_EXCEPTION("Can't read data register");
+    THROW_EXCEPTION("Can't read data register");
+    return;
   }
 
-  return scope.Close(Integer::New(data));
+  info.GetReturnValue().Set(Integer::New(isolate, data));
 }
 
-void Port::SetData(Local<String> property, Local<Value> value, const AccessorInfo& info) {
+void Port::SetData(Local<String> property, Local<Value> value, const PropertyCallbackInfo<void>& info) {
+  Isolate* isolate = info.GetIsolate();
+
   int val = value->IntegerValue();
   int dir;
   Port* obj = ObjectWrap::Unwrap<Port>(info.Holder());
@@ -107,22 +117,28 @@ void Port::SetData(Local<String> property, Local<Value> value, const AccessorInf
   }
 }
 
-Handle<Value> Port::GetControl(Local<String> property, const AccessorInfo& info) {
-  HandleScope scope;
+void Port::GetControl(Local<String> property, const PropertyCallbackInfo<Value>& info) {
+  // Isolate* isolate = info.GetIsolate();
+
   Port* obj = ObjectWrap::Unwrap<Port>(info.Holder());
-  return scope.Close(PortControl::NewInstance(obj->handle_));
+  PortControl::NewInstance(info, obj->handle_);
 }
 
-void Port::SetControl(Local<String> property, Local<Value> value, const AccessorInfo& info) {
+void Port::SetControl(Local<String> property, Local<Value> value, const PropertyCallbackInfo<void>& info) {
+  Isolate* isolate = info.GetIsolate();
+
   THROW_EXCEPTION("You can't modify control itself");
 }
 
-Handle<Value> Port::GetStatus(Local<String> property, const AccessorInfo& info) {
-  HandleScope scope;
+void Port::GetStatus(Local<String> property, const PropertyCallbackInfo<Value>& info) {
+  // Isolate* isolate = info.GetIsolate();
+
   Port* obj = ObjectWrap::Unwrap<Port>(info.Holder());
-  return scope.Close(PortStatus::NewInstance(obj->handle_));
+  PortStatus::NewInstance(info, obj->handle_);
 }
 
-void Port::SetStatus(Local<String> property, Local<Value> value, const AccessorInfo& info) {
+void Port::SetStatus(Local<String> property, Local<Value> value, const PropertyCallbackInfo<void>& info) {
+  Isolate* isolate = info.GetIsolate();
+  
   THROW_EXCEPTION("You can't modify status");
 }

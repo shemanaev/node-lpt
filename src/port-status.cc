@@ -6,7 +6,10 @@
 #include "port-status.h"
 #include "node-helpers.h"
 
-using namespace v8;
+using v8::Boolean;
+using v8::Exception;
+using v8::FunctionTemplate;
+using v8::Integer;
 
 Persistent<Function> PortStatus::constructor;
 
@@ -22,9 +25,11 @@ int PortStatus::GetStatus() {
   return val;
 }
 
-void PortStatus::Init(Handle<Object> exports) {
-  Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
-  tpl->SetClassName(String::NewSymbol("PortStatus"));
+void PortStatus::Init(Local<Object> exports) {
+  Isolate* isolate = Isolate::GetCurrent();
+
+  Local<FunctionTemplate> tpl = FunctionTemplate::New(isolate, New);
+  tpl->SetClassName(String::NewFromUtf8(isolate, "PortStatus"));
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
   NODE_SET_ACCESSOR(tpl, "ack", GetAck, SetStatus);
@@ -33,63 +38,72 @@ void PortStatus::Init(Handle<Object> exports) {
   NODE_SET_ACCESSOR(tpl, "select", GetSelect, SetStatus);
   NODE_SET_ACCESSOR(tpl, "paperOut", GetPaperOut, SetStatus);
 
-  constructor = Persistent<Function>::New(tpl->GetFunction());
-  exports->Set(String::NewSymbol("PortStatus"), constructor);
+  constructor.Reset(isolate, tpl->GetFunction());
+  exports->Set(String::NewFromUtf8(isolate, "PortStatus"), tpl->GetFunction());
 }
 
-Handle<Value> PortStatus::New(const Arguments& args) {
-  HandleScope scope;
+void PortStatus::New(const FunctionCallbackInfo<Value>& args) {
+  Isolate* isolate = args.GetIsolate();
 
   if (!args.IsConstructCall()) {
-    return THROW_EXCEPTION("Use the new operator to create instances of this object.");
+    THROW_EXCEPTION("Use the new operator to create instances of this object.");
+    return;
   }
 
   int num = args[0]->IsUndefined() ? 0 : args[0]->IntegerValue();
   PortStatus* obj = new PortStatus(num);
   obj->Wrap(args.This());
-  return args.This();
+  args.GetReturnValue().Set(args.This());
 }
 
-Handle<Value> PortStatus::NewInstance(int handle) {
-  HandleScope scope;
+void PortStatus::NewInstance(const PropertyCallbackInfo<Value>& args, int handle) {
+  Isolate* isolate = args.GetIsolate();
 
   const unsigned argc = 1;
-  Handle<Value> argv[argc] = { Integer::New(handle) };
-  Local<Object> instance = constructor->NewInstance(argc, argv);
+  Local<Value> argv[argc] = { Integer::New(isolate, handle) };
+  Local<Function> cons = Local<Function>::New(isolate, constructor);
+  Local<Object> instance = cons->NewInstance(argc, argv);
 
-  return scope.Close(instance);
+  args.GetReturnValue().Set(instance);
 }
 
-Handle<Value> PortStatus::GetAck(Local<String> property, const AccessorInfo& info) {
-  HandleScope scope;
+void PortStatus::GetAck(Local<String> property, const PropertyCallbackInfo<Value>& info) {
+  Isolate* isolate = info.GetIsolate();
+
   PortStatus* obj = ObjectWrap::Unwrap<PortStatus>(info.Holder());
-  return scope.Close(Boolean::New((obj->GetStatus() & PARPORT_STATUS_ACK) == PARPORT_STATUS_ACK));
+  info.GetReturnValue().Set(Boolean::New(isolate, (obj->GetStatus() & PARPORT_STATUS_ACK) == PARPORT_STATUS_ACK));
 }
 
-Handle<Value> PortStatus::GetBusy(Local<String> property, const AccessorInfo& info) {
-  HandleScope scope;
+void PortStatus::GetBusy(Local<String> property, const PropertyCallbackInfo<Value>& info) {
+  Isolate* isolate = info.GetIsolate();
+
   PortStatus* obj = ObjectWrap::Unwrap<PortStatus>(info.Holder());
-  return scope.Close(Boolean::New((obj->GetStatus() & PARPORT_STATUS_BUSY) == PARPORT_STATUS_BUSY));
+  info.GetReturnValue().Set(Boolean::New(isolate, (obj->GetStatus() & PARPORT_STATUS_BUSY) == PARPORT_STATUS_BUSY));
 }
 
-Handle<Value> PortStatus::GetError(Local<String> property, const AccessorInfo& info) {
-  HandleScope scope;
+void PortStatus::GetError(Local<String> property, const PropertyCallbackInfo<Value>& info) {
+  Isolate* isolate = info.GetIsolate();
+
   PortStatus* obj = ObjectWrap::Unwrap<PortStatus>(info.Holder());
-  return scope.Close(Boolean::New((obj->GetStatus() & PARPORT_STATUS_ERROR) == PARPORT_STATUS_ERROR));
+  info.GetReturnValue().Set(Boolean::New(isolate, (obj->GetStatus() & PARPORT_STATUS_ERROR) == PARPORT_STATUS_ERROR));
 }
 
-Handle<Value> PortStatus::GetSelect(Local<String> property, const AccessorInfo& info) {
-  HandleScope scope;
+void PortStatus::GetSelect(Local<String> property, const PropertyCallbackInfo<Value>& info) {
+  Isolate* isolate = info.GetIsolate();
+
   PortStatus* obj = ObjectWrap::Unwrap<PortStatus>(info.Holder());
-  return scope.Close(Boolean::New((obj->GetStatus() & PARPORT_STATUS_SELECT) == PARPORT_STATUS_SELECT));
+  info.GetReturnValue().Set(Boolean::New(isolate, (obj->GetStatus() & PARPORT_STATUS_SELECT) == PARPORT_STATUS_SELECT));
 }
 
-Handle<Value> PortStatus::GetPaperOut(Local<String> property, const AccessorInfo& info) {
-  HandleScope scope;
+void PortStatus::GetPaperOut(Local<String> property, const PropertyCallbackInfo<Value>& info) {
+  Isolate* isolate = info.GetIsolate();
+
   PortStatus* obj = ObjectWrap::Unwrap<PortStatus>(info.Holder());
-  return scope.Close(Boolean::New((obj->GetStatus() & PARPORT_STATUS_PAPEROUT) == PARPORT_STATUS_PAPEROUT));
+  info.GetReturnValue().Set(Boolean::New(isolate, (obj->GetStatus() & PARPORT_STATUS_PAPEROUT) == PARPORT_STATUS_PAPEROUT));
 }
 
-void PortStatus::SetStatus(Local<String> property, Local<Value> value, const AccessorInfo& info) {
+void PortStatus::SetStatus(Local<String> property, Local<Value> value, const PropertyCallbackInfo<void>& info) {
+  Isolate* isolate = info.GetIsolate();
+
   THROW_EXCEPTION("You can't modify status fields");
 }

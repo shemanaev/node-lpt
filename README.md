@@ -4,6 +4,8 @@ High-level bindings to parallel port for node.js.
 
 **Important**: this module works only under linux through the `parport` driver,
 so you might need to compile kernel or modules (on gentoo mostly).
+Module updated for modern node versions (node >= 0.12 and iojs >= 1.0) and will not work for older.
+If you need it on node <=0.10 use previous version `~0.2.3`.
 
 ## Installation
 
