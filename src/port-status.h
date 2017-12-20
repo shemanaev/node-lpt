@@ -1,43 +1,32 @@
 #ifndef PORT_STATUS_H
 #define PORT_STATUS_H
 
-#include <node.h>
-#include <node_object_wrap.h>
+#include <nan.h>
 
-using v8::Function;
-using v8::FunctionCallbackInfo;
-using v8::Isolate;
-using v8::Local;
-using v8::Object;
-using v8::Persistent;
-using v8::PropertyCallbackInfo;
-using v8::String;
-using v8::Value;
+class PortStatus : public Nan::ObjectWrap {
+  public:
+    static NAN_MODULE_INIT(Init);
+    static void NewInstance(const Nan::PropertyCallbackInfo<v8::Value>& args, int handle);
 
-class PortStatus : public node::ObjectWrap {
- public:
-  static void Init(Local<Object> exports);
-  static void NewInstance(const PropertyCallbackInfo<Value>& args, int handle);
+  private:
+    explicit PortStatus(int handle);
+    ~PortStatus();
 
- private:
-  explicit PortStatus(int handle);
-  ~PortStatus();
+    int GetStatus();
 
-  int GetStatus();
+    static NAN_METHOD(New);
 
-  static void New(const FunctionCallbackInfo<Value>& args);
+    static NAN_GETTER(GetAck);
+    static NAN_GETTER(GetBusy);
+    static NAN_GETTER(GetError);
+    static NAN_GETTER(GetSelect);
+    static NAN_GETTER(GetPaperOut);
 
-  static void GetAck(Local<String> property, const PropertyCallbackInfo<Value>& info);
-  static void GetBusy(Local<String> property, const PropertyCallbackInfo<Value>& info);
-  static void GetError(Local<String> property, const PropertyCallbackInfo<Value>& info);
-  static void GetSelect(Local<String> property, const PropertyCallbackInfo<Value>& info);
-  static void GetPaperOut(Local<String> property, const PropertyCallbackInfo<Value>& info);
-  
-  static void SetStatus(Local<String> property, Local<Value> value, const PropertyCallbackInfo<void>& info);
+    static NAN_SETTER(SetStatus);
 
-  static Persistent<Function> constructor;
+    static Nan::Persistent<v8::Function> constructor;
 
-  int handle_;
+    int handle_;
 };
 
 #endif

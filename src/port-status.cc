@@ -1,17 +1,12 @@
-#include <node.h>
+#include <nan.h>
+
 #include <sys/ioctl.h>
 #include <linux/parport.h>
 #include <linux/ppdev.h>
 
 #include "port-status.h"
-#include "node-helpers.h"
 
-using v8::Boolean;
-using v8::Exception;
-using v8::FunctionTemplate;
-using v8::Integer;
-
-Persistent<Function> PortStatus::constructor;
+Nan::Persistent<v8::Function> PortStatus::constructor;
 
 PortStatus::PortStatus(int handle) : handle_(handle) {}
 PortStatus::~PortStatus() {}
@@ -25,85 +20,77 @@ int PortStatus::GetStatus() {
   return val;
 }
 
-void PortStatus::Init(Local<Object> exports) {
-  Isolate* isolate = Isolate::GetCurrent();
-
-  Local<FunctionTemplate> tpl = FunctionTemplate::New(isolate, New);
-  tpl->SetClassName(String::NewFromUtf8(isolate, "PortStatus"));
+NAN_MODULE_INIT(PortStatus::Init) {
+  v8::Local<v8::FunctionTemplate> tpl = Nan::New<v8::FunctionTemplate>(New);
+  auto tplInst = tpl->InstanceTemplate();
+  tpl->SetClassName(Nan::New("PortStatus").ToLocalChecked());
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-  NODE_SET_ACCESSOR(tpl, "ack", GetAck, SetStatus);
-  NODE_SET_ACCESSOR(tpl, "busy", GetBusy, SetStatus);
-  NODE_SET_ACCESSOR(tpl, "error", GetError, SetStatus);
-  NODE_SET_ACCESSOR(tpl, "select", GetSelect, SetStatus);
-  NODE_SET_ACCESSOR(tpl, "paperOut", GetPaperOut, SetStatus);
+  Nan::SetAccessor(tplInst, Nan::New("ack").ToLocalChecked(), GetAck, SetStatus);
+  Nan::SetAccessor(tplInst, Nan::New("busy").ToLocalChecked(), GetBusy, SetStatus);
+  Nan::SetAccessor(tplInst, Nan::New("error").ToLocalChecked(), GetError, SetStatus);
+  Nan::SetAccessor(tplInst, Nan::New("select").ToLocalChecked(), GetSelect, SetStatus);
+  Nan::SetAccessor(tplInst, Nan::New("paperOut").ToLocalChecked(), GetPaperOut, SetStatus);
 
-  constructor.Reset(isolate, tpl->GetFunction());
-  exports->Set(String::NewFromUtf8(isolate, "PortStatus"), tpl->GetFunction());
+  constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
+  Nan::Set(target, Nan::New("PortStatus").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
 }
 
-void PortStatus::New(const FunctionCallbackInfo<Value>& args) {
-  Isolate* isolate = args.GetIsolate();
-
-  if (!args.IsConstructCall()) {
-    THROW_EXCEPTION("Use the new operator to create instances of this object.");
+NAN_METHOD(PortStatus::New) {
+  if (!info.IsConstructCall()) {
+    Nan::ThrowError("Use the new operator to create instances of this object.");
     return;
   }
 
-  int num = args[0]->IsUndefined() ? 0 : args[0]->IntegerValue();
+  int num = info[0]->IsUndefined() ? 0 : info[0]->IntegerValue();
   PortStatus* obj = new PortStatus(num);
-  obj->Wrap(args.This());
-  args.GetReturnValue().Set(args.This());
+  obj->Wrap(info.This());
+  info.GetReturnValue().Set(info.This());
 }
 
-void PortStatus::NewInstance(const PropertyCallbackInfo<Value>& args, int handle) {
-  Isolate* isolate = args.GetIsolate();
-
+void PortStatus::NewInstance(const Nan::PropertyCallbackInfo<v8::Value>& args, int handle) {
   const unsigned argc = 1;
-  Local<Value> argv[argc] = { Integer::New(isolate, handle) };
-  Local<Function> cons = Local<Function>::New(isolate, constructor);
-  Local<Object> instance = cons->NewInstance(argc, argv);
+  v8::Local<v8::Value> argv[argc] = { Nan::New(handle) };
+  v8::Local<v8::Function> cons = Nan::New(constructor);
+  //v8::Local<v8::Object> instance = cons->NewInstance(argc, argv);
+
+  Nan::MaybeLocal<v8::Object> maybeInstance = Nan::NewInstance(cons, argc, argv);
+  v8::Local<v8::Object> instance;
+
+  if (maybeInstance.IsEmpty()) {
+    Nan::ThrowError("Could not create new PortStatus instance");
+  } else {
+    instance = maybeInstance.ToLocalChecked();
+  }
 
   args.GetReturnValue().Set(instance);
 }
 
-void PortStatus::GetAck(Local<String> property, const PropertyCallbackInfo<Value>& info) {
-  Isolate* isolate = info.GetIsolate();
-
+NAN_GETTER(PortStatus::GetAck) {
   PortStatus* obj = ObjectWrap::Unwrap<PortStatus>(info.Holder());
-  info.GetReturnValue().Set(Boolean::New(isolate, (obj->GetStatus() & PARPORT_STATUS_ACK) == PARPORT_STATUS_ACK));
+  info.GetReturnValue().Set((obj->GetStatus() & PARPORT_STATUS_ACK) == PARPORT_STATUS_ACK);
 }
 
-void PortStatus::GetBusy(Local<String> property, const PropertyCallbackInfo<Value>& info) {
-  Isolate* isolate = info.GetIsolate();
-
+NAN_GETTER(PortStatus::GetBusy) {
   PortStatus* obj = ObjectWrap::Unwrap<PortStatus>(info.Holder());
-  info.GetReturnValue().Set(Boolean::New(isolate, (obj->GetStatus() & PARPORT_STATUS_BUSY) == PARPORT_STATUS_BUSY));
+  info.GetReturnValue().Set((obj->GetStatus() & PARPORT_STATUS_BUSY) == PARPORT_STATUS_BUSY);
 }
 
-void PortStatus::GetError(Local<String> property, const PropertyCallbackInfo<Value>& info) {
-  Isolate* isolate = info.GetIsolate();
-
+NAN_GETTER(PortStatus::GetError) {
   PortStatus* obj = ObjectWrap::Unwrap<PortStatus>(info.Holder());
-  info.GetReturnValue().Set(Boolean::New(isolate, (obj->GetStatus() & PARPORT_STATUS_ERROR) == PARPORT_STATUS_ERROR));
+  info.GetReturnValue().Set((obj->GetStatus() & PARPORT_STATUS_ERROR) == PARPORT_STATUS_ERROR);
 }
 
-void PortStatus::GetSelect(Local<String> property, const PropertyCallbackInfo<Value>& info) {
-  Isolate* isolate = info.GetIsolate();
-
+NAN_GETTER(PortStatus::GetSelect) {
   PortStatus* obj = ObjectWrap::Unwrap<PortStatus>(info.Holder());
-  info.GetReturnValue().Set(Boolean::New(isolate, (obj->GetStatus() & PARPORT_STATUS_SELECT) == PARPORT_STATUS_SELECT));
+  info.GetReturnValue().Set((obj->GetStatus() & PARPORT_STATUS_SELECT) == PARPORT_STATUS_SELECT);
 }
 
-void PortStatus::GetPaperOut(Local<String> property, const PropertyCallbackInfo<Value>& info) {
-  Isolate* isolate = info.GetIsolate();
-
+NAN_GETTER(PortStatus::GetPaperOut) {
   PortStatus* obj = ObjectWrap::Unwrap<PortStatus>(info.Holder());
-  info.GetReturnValue().Set(Boolean::New(isolate, (obj->GetStatus() & PARPORT_STATUS_PAPEROUT) == PARPORT_STATUS_PAPEROUT));
+  info.GetReturnValue().Set((obj->GetStatus() & PARPORT_STATUS_PAPEROUT) == PARPORT_STATUS_PAPEROUT);
 }
 
-void PortStatus::SetStatus(Local<String> property, Local<Value> value, const PropertyCallbackInfo<void>& info) {
-  Isolate* isolate = info.GetIsolate();
-
-  THROW_EXCEPTION("You can't modify status fields");
+NAN_SETTER(PortStatus::SetStatus) {
+  Nan::ThrowError("You can't modify status fields");
 }
